@@ -38,13 +38,11 @@ js_code = execjs.compile(js_from_file(r"D:\App Development\Grabber\AliSliderCrac
 
 
 def downloadSourceCode():
-    store_id = int(input('Store ID to grab source from: '))
+    # store_id = int(input('Store ID to grab source from: '))
     numPages = int(input('Number of pages you want to scrape: '))
-    path = input('The path you want to save the file: ')
-    html_output_name = input('Name for html file: ')
 
     urls = []
-    reqs = []
+    requests_result = []
 
     for i in range(1, numPages + 1):
         urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(i) + ".html")
@@ -54,47 +52,52 @@ def downloadSourceCode():
         if 'pic-rind' not in req_result:
             js_code.call("bypass", url)
         else:
-            reqs.append(req_result)
+            requests_result.append(req_result)
 
-    with open(path + html_output_name + '.txt', 'w', encoding='gb18030', errors='ignore') as f:
-        for req in reqs:
-            f.write(req + "\n")
-        f.close()
+    return requests_result
 
 
-def getProductURL(list_dir):
+def getProductURL(requests_result):
     """
-    :param list_dir:
+    :param requests_result:
     :return:
     """
+    urls_list = []
+    for srcPerPage in requests_result:
+        soup = BeautifulSoup(srcPerPage, 'html.parser')
+        urls_list.append(soup.findAll('a', {'class': 'pic-rind'}))
 
-    path = list_dir + '//'
-    htmlDirEntries = sorted(
-        [filename for filename in os.listdir(path) if filename.endswith(".html")])
+    for urls in urls_list:
+        for i in range(len(urls)):
+            urls[i] = 'https:' + urls[i].get('href')
 
-    HTMLdict = {}
-    for filename in htmlDirEntries:
-        soup = BeautifulSoup(open(os.path.join(path, filename), encoding='gb18030', errors='ignore'), 'html.parser')
-        HTMLdict[filename] = soup
-
-    for filename in HTMLdict:
-        HTMLdict[filename] = HTMLdict[filename].findAll('a', {'class': 'pic-rind'})
-        for i in range(len(HTMLdict[filename])):
-            HTMLdict[filename][i] = 'https:' + HTMLdict[filename][i].get('href')
-
-    print(HTMLdict)
-    return HTMLdict
+    return urls_list
 
 
-def download_product(HTMLdict):
-    for filename in HTMLdict:
-        for url in HTMLdict[filename]:
+def download_product(urls_list):
+    # Example of path: C://Users//Lenovo//Desktop//html//911651019//
+    parent_dir = input("Enter the path you wanna store your HTML files: ")
+    folder_name = str(store_id)
+    path = os.path.join(parent_dir, folder_name)
+    os.mkdir(path)
+
+    for urls in urls_list:
+        for url in urls:
             response = requests.get(url, headers=AliExpress_headers)
             content = response.content
             product_id = (url.split('.html')[0]).split('/item/')[1]
-            with open("C://Users//Lenovo//Desktop//html//911651019//" + product_id + '.html', 'wb') as f:
+            file_name = product_id + '.html'
+            with open(os.path.join(path, file_name), 'wb') as f:
                 f.write(content)
 
 
 if __name__ == '__main__':
-    downloadSourceCode()
+    store_id = int(input('Store ID to grab source from: '))
+    result1 = downloadSourceCode()
+    print(result1)
+    result2 = getProductURL(result1)
+    print(result2)
+    download_product(result2)
+
+
+
