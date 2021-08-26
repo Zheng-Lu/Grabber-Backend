@@ -34,7 +34,7 @@ def js_from_file(file_name):
     return result
 
 
-js_code = execjs.compile(js_from_file(r"D:\App Development\Grabber\AliSliderCracker.js"))
+js_code = execjs.compile(js_from_file("./AliSliderCracker.js"))
 
 
 def downloadSourceCode():
@@ -55,6 +55,25 @@ def downloadSourceCode():
             requests_result.append(req_result)
 
     return requests_result
+
+
+def readData():
+    IDlist = []
+    with open("productId.txt", "r") as f:
+        for line in f:
+            products = line.split(",")
+            for product in products:
+                IDlist.append(product.replace("'", ""))
+    return IDlist
+
+
+def downloadProductSrc(IDlist):
+    urls_list = []
+
+    for ID in IDlist:
+        urls_list.append("https://www.aliexpress.com/item/" + ID + ".html")
+
+    return urls_list
 
 
 def getProductURL(requests_result):
@@ -90,14 +109,25 @@ def download_product(urls_list):
             with open(os.path.join(path, file_name), 'wb') as f:
                 f.write(content)
 
+    # for url in urls_list:
+    #     try:
+    #         response = requests.get(url, headers=AliExpress_headers)
+    #         content = response.content
+    #         product_id = (url.split('.html')[0]).split('/item/')[1]
+    #         file_name = product_id + '.html'
+    #         with open(os.path.join(path, file_name), 'wb') as f:
+    #             f.write(content)
+    #     except:
+    #         js_code.call("bypass", url)
+
 
 if __name__ == '__main__':
     store_id = int(input('Store ID to grab source from: '))
-    result1 = downloadSourceCode()
-    print(result1)
-    result2 = getProductURL(result1)
-    print(result2)
-    download_product(result2)
+    # result1 = downloadSourceCode()
+    # print(result1)
+    # result2 = getProductURL(result1)
+    # print(result2)
+    # download_product(result2)
 
-
-
+    url_list = downloadProductSrc(readData())
+    download_product(url_list)
