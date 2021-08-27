@@ -2,7 +2,16 @@ import os
 import execjs
 import requests
 import random
+
+from multiprocessing import Pool, cpu_count
+import concurrent.futures
+from urllib.request import Request, urlopen
+from urllib.parse import urlparse
+import time
+import threading
+from queue import Queue
 from bs4 import BeautifulSoup
+import argparse
 
 user_agent_list = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
@@ -14,11 +23,6 @@ user_agent_list = [
 
 AliExpress_headers = {
     'user-agent': random.choice(user_agent_list),
-}
-
-payload = {
-    "fm-login-id": 'Lz429671594@outlook.com',
-    'fm-login-password': 'pf52CE4JyGiY7fj'
 }
 
 
@@ -38,14 +42,37 @@ js_code = execjs.compile(js_from_file("./AliSliderCracker.js"))
 
 
 def downloadSourceCode():
-    # store_id = int(input('Store ID to grab source from: '))
-    numPages = int(input('Number of pages you want to scrape: '))
-
     urls = []
     requests_result = []
 
-    for i in range(1, numPages + 1):
-        urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(i) + ".html")
+    numPages = int(input('Number of pages you want to scrape: '))
+    choice = int(input(
+        "Sort Types:\n1.Best Match    2.Price \u2193    3.Price \u2191    4.New \u2193     5.Orders \u2193\nChoose one of Sort Types above:"))
+
+    sort_types = {1: 'bestmatch_sort', 2: 'price_desc', 3: 'price_asc', 4: 'new_desc', 5: 'orders_desc'}
+    while choice not in [x for x in range(1, 6)]:
+        if choice == 1:
+            for i in range(1, numPages + 1):
+                urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+                    i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[1]}")
+        elif choice == 2:
+            for i in range(1, numPages + 1):
+                urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+                    i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[2]}")
+        elif choice == 3:
+            for i in range(1, numPages + 1):
+                urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+                    i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[3]}")
+        elif choice == 4:
+            for i in range(1, numPages + 1):
+                urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+                    i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[4]}")
+        elif choice == 5:
+            for i in range(1, numPages + 1):
+                urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+                    i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[5]}")
+        else:
+            print("Wrong Choice, terminating the program.")
 
     for url in urls:
         req_result = requests.get(url, 'html.parser').text
@@ -102,8 +129,14 @@ def download_product(urls_list):
 
     for urls in urls_list:
         for url in urls:
-            response = requests.get(url, headers=AliExpress_headers)
-            content = response.content
+            try:
+                response = requests.get(url, headers=AliExpress_headers)
+                content = response.content
+            except:
+                response = requests.get(url, headers=AliExpress_headers)
+                js_code.call("bypass", url)
+                content = response.content
+
             product_id = (url.split('.html')[0]).split('/item/')[1]
             file_name = product_id + '.html'
             with open(os.path.join(path, file_name), 'wb') as f:
@@ -113,21 +146,30 @@ def download_product(urls_list):
     #     try:
     #         response = requests.get(url, headers=AliExpress_headers)
     #         content = response.content
-    #         product_id = (url.split('.html')[0]).split('/item/')[1]
-    #         file_name = product_id + '.html'
-    #         with open(os.path.join(path, file_name), 'wb') as f:
-    #             f.write(content)
+    #
     #     except:
+    #         response = requests.get(url, headers=AliExpress_headers)
     #         js_code.call("bypass", url)
+    #         content = response.content
+    #
+    #     product_id = (url.split('.html')[0]).split('/item/')[1]
+    #     file_name = product_id + '.html'
+    #     with open(os.path.join(path, file_name), 'wb') as f:
+    #         f.write(content)
+
+
+def run():
+    srcCode = downloadSourceCode()
+    print(srcCode)
+    urls = getProductURL(srcCode)
+    print(urls)
+    download_product(urls)
 
 
 if __name__ == '__main__':
     store_id = int(input('Store ID to grab source from: '))
-    # result1 = downloadSourceCode()
-    # print(result1)
-    # result2 = getProductURL(result1)
-    # print(result2)
-    # download_product(result2)
+    run()
 
-    url_list = downloadProductSrc(readData())
-    download_product(url_list)
+    # Download from text file
+    # url_list = downloadProductSrc(readData())
+    # download_product(url_list)
