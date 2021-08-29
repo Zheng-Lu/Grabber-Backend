@@ -48,7 +48,6 @@ def downloadSourceCode():
     numPages = int(input('Number of pages you want to scrape: '))
     choice = int(input(
         "Sort Types:\n1.Best Match    2.Price \u2193    3.Price \u2191    4.New \u2193     5.Orders \u2193\nChoose one of Sort Types above:"))
-    search_text = input("Input key word to search specific products(Press [Enter\u23CE] to ignore) : ")
 
     while choice not in [x for x in range(1, 6)]:
         print("Out of range! Choose between 1 ~ 5")
@@ -57,31 +56,12 @@ def downloadSourceCode():
 
     sort_types = {1: 'bestmatch_sort', 2: 'price_desc', 3: 'price_asc', 4: 'new_desc', 5: 'orders_desc'}
 
-    if choice == 1:
-        for i in range(1, numPages + 1):
-            urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
-                i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[1]}&SearchText={search_text}")
-    elif choice == 2:
-        for i in range(1, numPages + 1):
-            urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
-                i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[2]}&SearchText={search_text}")
-    elif choice == 3:
-        for i in range(1, numPages + 1):
-            urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
-                i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[3]}&SearchText={search_text}")
-    elif choice == 4:
-        for i in range(1, numPages + 1):
-            urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
-                i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[4]}&SearchText={search_text}")
-    elif choice == 5:
-        for i in range(1, numPages + 1):
-            urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
-                i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[5]}&SearchText={search_text}")
-    # else:
-    #     while choice not in [x for x in range(1, 6)]:
-    #         int(input(
-    #             "Sort Types:\n1.Best Match    2.Price \u2193    3.Price \u2191    4.New \u2193     5.Orders \u2193\nChoose one of Sort Types above:"))
-    #         print("Out of range! Choose")
+    search_text = input("Input key word to search specific products(Press [Enter\u23CE] to ignore) : ")
+
+    for i in range(1, numPages + 1):
+        urls.append("https://www.aliexpress.com/store/sale-items/" + str(store_id) + '/' + str(
+            i) + f".html?origin=n&promotionType=fixed&SortType={sort_types[choice]}&SearchText={search_text}")
+
 
     for url in urls:
         req_result = requests.get(url, 'html.parser').text
